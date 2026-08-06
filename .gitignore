@@ -1,0 +1,5 @@
+.env
+.ml_token.json
+.new_refresh_token
+coleta.log
+__pycache__/
