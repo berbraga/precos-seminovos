@@ -52,10 +52,10 @@ jobs:
 
       - name: publicar
         run: |
-          if ! git diff --quiet -- ml_precos.json; then
+          git add ml_precos.json
+          if ! git diff --cached --quiet -- ml_precos.json; then
             git config user.name "coleta-precos[bot]"
             git config user.email "coleta-precos[bot]@users.noreply.github.com"
-            git add ml_precos.json
             git commit -m "chore: atualiza ml_precos.json"
             git push
           else
