@@ -347,9 +347,17 @@ def coletar(modelos, client_id, client_secret, refresh_token):
     access_token, _ = obter_access_token(client_id, client_secret, refresh_token)
 
     bruto = []
+    erro_detalhado_impresso = False
     for modelo in modelos:
         try:
             anuncios = buscar_modelo(access_token, modelo)
+        except urllib.error.HTTPError as erro:
+            if not erro_detalhado_impresso:
+                corpo = erro.read().decode("utf-8", errors="replace")
+                print(f"ERRO detalhado (HTTP {erro.code}): {corpo}", file=sys.stderr)
+                erro_detalhado_impresso = True
+            print(f"ERRO ao coletar {modelo}: HTTP {erro.code}", file=sys.stderr)
+            continue
         except Exception as erro:
             print(f"ERRO ao coletar {modelo}: {erro}", file=sys.stderr)
             continue
