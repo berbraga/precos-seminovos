@@ -32,14 +32,14 @@ info = json.loads(body)[0]
 domain_id = info["domain_id"]
 category_id = info["category_id"]
 
-_, body = testar("q=iphone 13 seminovo + domain + limit50", f"https://api.mercadolibre.com/products/search?site_id=MLB&domain_id={domain_id}&q=iphone+13+seminovo&limit=50")
+_, body = testar("q=iphone 13 seminovo + domain + limit10", f"https://api.mercadolibre.com/products/search?site_id=MLB&domain_id={domain_id}&q=iphone+13+seminovo&limit=10")
 dados = json.loads(body)
 print(f"total={dados['paging']['total']} results={len(dados['results'])}")
-for r in dados["results"][:5]:
-    print(" ", r.get("id"), r.get("domain_id"), r.get("name"))
+print("PRIMEIRO RESULT COMPLETO:")
+print(json.dumps(dados["results"][0], ensure_ascii=False))
 
-# testar se /products/{catalog_product_id}/items aceita condition=used
-if dados["results"]:
-    pid = dados["results"][0]["id"]
-    testar(f"items de {pid} condition=used", f"https://api.mercadolibre.com/products/{pid}/items?condition=used")
+# testar items de varios catalogos ate achar um com winner usado
+for r in dados["results"][:8]:
+    pid = r["id"]
+    _, body2 = testar(f"items {pid} ({r.get('name')}) condition=used", f"https://api.mercadolibre.com/products/{pid}/items?condition=used")
 
