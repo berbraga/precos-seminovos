@@ -14,18 +14,25 @@ client_id, client_secret, refresh_token = obter_credenciais()
 access_token, _ = obter_access_token(client_id, client_secret, refresh_token)
 
 CANDIDATOS = [
-    ("products/search keywords=iphone", "https://api.mercadolibre.com/products/search?status=active&site_id=MLB&category_id=MLB1055&keywords=iphone"),
-    ("products/search keywords=iphone 13", "https://api.mercadolibre.com/products/search?status=active&site_id=MLB&category_id=MLB1055&keywords=iphone%2013"),
+    ("highlights categoria", "https://api.mercadolibre.com/highlights/MLB/category/MLB1055"),
 ]
 
 for nome, url in CANDIDATOS:
     request = urllib.request.Request(url, headers={"Authorization": f"Bearer {access_token}"})
-    try:
-        with urllib.request.urlopen(request, timeout=15) as resposta:
-            corpo = resposta.read().decode("utf-8", errors="replace")
-            print(f"{nome}: HTTP {resposta.status} - {len(corpo)} bytes - {corpo[:1200]}")
-    except urllib.error.HTTPError as erro:
-        corpo = erro.read().decode("utf-8", errors="replace")
-        print(f"{nome}: HTTP {erro.code} - {corpo[:200]}")
-    except Exception as erro:
-        print(f"{nome}: ERRO {erro}")
+    with urllib.request.urlopen(request, timeout=15) as resposta:
+        dados = json.loads(resposta.read().decode("utf-8"))
+    ids = [c["id"] for c in dados.get("content", []) if c.get("type") == "PRODUCT"]
+    print(f"{nome}: {len(ids)} ids -> {ids[:10]}")
+
+    for item_id in ids[:3]:
+        for path in (f"/items/{item_id}", f"/products/{item_id}", f"/products/{item_id}/items"):
+            url2 = f"https://api.mercadolibre.com{path}"
+            req2 = urllib.request.Request(url2, headers={"Authorization": f"Bearer {access_token}"})
+            try:
+                with urllib.request.urlopen(req2, timeout=15) as r2:
+                    body2 = r2.read().decode("utf-8", errors="replace")
+                    print(f"  {path}: HTTP {r2.status} - {body2[:300]}")
+            except urllib.error.HTTPError as e2:
+                body2 = e2.read().decode("utf-8", errors="replace")
+                print(f"  {path}: HTTP {e2.code} - {body2[:300]}")
+
