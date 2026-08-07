@@ -29,18 +29,13 @@ import urllib.parse
 
 _, body = testar("domain_discovery", "https://api.mercadolibre.com/sites/MLB/domain_discovery/search?q=iphone%2013&limit=5")
 info = json.loads(body)[0]
-line_value_id = next(a["value_id"] for a in info["attributes"] if a["id"] == "LINE")
-brand_value_id = next(a["value_id"] for a in info["attributes"] if a["id"] == "BRAND")
 domain_id = info["domain_id"]
+category_id = info["category_id"]
 
-attrs_variantes = [
-    f"LINE:{line_value_id}",
-    f"[{{\"id\":\"LINE\",\"value_id\":\"{line_value_id}\"}}]",
-]
-for attrs in attrs_variantes:
-    q = urllib.parse.quote(attrs, safe="")
-    testar(f"products/search attributes={attrs[:30]}", f"https://api.mercadolibre.com/products/search?status=active&site_id=MLB&domain_id={domain_id}&attributes={q}")
-
-# product_identifier as vezes eh o proprio value_id do LINE combinado com BRAND
-testar("products/search product_identifier=LINE value", f"https://api.mercadolibre.com/products/search?status=active&site_id=MLB&domain_id={domain_id}&product_identifier={line_value_id}")
+# reconferir keywords isolado, sem status=active, minimo de params
+testar("A: só keywords+site_id", "https://api.mercadolibre.com/products/search?site_id=MLB&keywords=iphone")
+testar("B: keywords+site_id+status", "https://api.mercadolibre.com/products/search?site_id=MLB&status=active&keywords=iphone+13")
+testar("C: keywords+domain_id", f"https://api.mercadolibre.com/products/search?site_id=MLB&domain_id={domain_id}&keywords=iphone")
+testar("D: keywords+category_id", f"https://api.mercadolibre.com/products/search?site_id=MLB&category_id={category_id}&keywords=iphone")
+testar("E: q em vez de keywords", "https://api.mercadolibre.com/products/search?site_id=MLB&q=iphone")
 
