@@ -14,13 +14,8 @@ client_id, client_secret, refresh_token = obter_credenciais()
 access_token, _ = obter_access_token(client_id, client_secret, refresh_token)
 
 CANDIDATOS = [
-    ("search por categoria (sem q=)", "https://api.mercadolibre.com/sites/MLB/search?category=MLB1055"),
-    ("search por categoria+q", "https://api.mercadolibre.com/sites/MLB/search?category=MLB1055&q=iphone"),
-    ("products/search", "https://api.mercadolibre.com/products/search?status=active&site_id=MLB&category_id=MLB1055"),
-    ("highlights categoria", "https://api.mercadolibre.com/highlights/MLB/category/MLB1055"),
-    ("categories/MLB1055 (metadata)", "https://api.mercadolibre.com/categories/MLB1055"),
-    ("sites/MLB (metadata)", "https://api.mercadolibre.com/sites/MLB"),
-    ("search generico condition=used", "https://api.mercadolibre.com/sites/MLB/search?category=MLB1055&condition=used"),
+    ("products/search keywords=iphone", "https://api.mercadolibre.com/products/search?status=active&site_id=MLB&category_id=MLB1055&keywords=iphone"),
+    ("products/search keywords=iphone 13", "https://api.mercadolibre.com/products/search?status=active&site_id=MLB&category_id=MLB1055&keywords=iphone%2013"),
 ]
 
 for nome, url in CANDIDATOS:
@@ -28,7 +23,7 @@ for nome, url in CANDIDATOS:
     try:
         with urllib.request.urlopen(request, timeout=15) as resposta:
             corpo = resposta.read().decode("utf-8", errors="replace")
-            print(f"{nome}: HTTP {resposta.status} - {len(corpo)} bytes - {corpo[:150]}")
+            print(f"{nome}: HTTP {resposta.status} - {len(corpo)} bytes - {corpo[:1200]}")
     except urllib.error.HTTPError as erro:
         corpo = erro.read().decode("utf-8", errors="replace")
         print(f"{nome}: HTTP {erro.code} - {corpo[:200]}")
