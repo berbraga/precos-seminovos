@@ -41,5 +41,11 @@ print(json.dumps(dados["results"][0], ensure_ascii=False))
 # testar items de varios catalogos ate achar um com winner usado
 for r in dados["results"][:8]:
     pid = r["id"]
-    _, body2 = testar(f"items {pid} ({r.get('name')}) condition=used", f"https://api.mercadolibre.com/products/{pid}/items?condition=used")
+    status2, body2 = testar(f"items {pid} ({r.get('name')}) condition=used", f"https://api.mercadolibre.com/products/{pid}/items?condition=used")
+    if status2 == 200:
+        d2 = json.loads(body2)
+        usados = [x for x in d2["results"] if x.get("condition") == "used"]
+        print(f"  -> {len(d2['results'])} total, {len(usados)} usados")
+        if usados:
+            print("  PRIMEIRO USADO COMPLETO:", json.dumps(usados[0], ensure_ascii=False)[:1500])
 
