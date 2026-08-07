@@ -32,10 +32,14 @@ info = json.loads(body)[0]
 domain_id = info["domain_id"]
 category_id = info["category_id"]
 
-# reconferir keywords isolado, sem status=active, minimo de params
-testar("A: só keywords+site_id", "https://api.mercadolibre.com/products/search?site_id=MLB&keywords=iphone")
-testar("B: keywords+site_id+status", "https://api.mercadolibre.com/products/search?site_id=MLB&status=active&keywords=iphone+13")
-testar("C: keywords+domain_id", f"https://api.mercadolibre.com/products/search?site_id=MLB&domain_id={domain_id}&keywords=iphone")
-testar("D: keywords+category_id", f"https://api.mercadolibre.com/products/search?site_id=MLB&category_id={category_id}&keywords=iphone")
-testar("E: q em vez de keywords", "https://api.mercadolibre.com/products/search?site_id=MLB&q=iphone")
+_, body = testar("q=iphone 13 seminovo + domain + limit50", f"https://api.mercadolibre.com/products/search?site_id=MLB&domain_id={domain_id}&q=iphone+13+seminovo&limit=50")
+dados = json.loads(body)
+print(f"total={dados['paging']['total']} results={len(dados['results'])}")
+for r in dados["results"][:5]:
+    print(" ", r.get("id"), r.get("domain_id"), r.get("name"))
+
+# testar se /products/{catalog_product_id}/items aceita condition=used
+if dados["results"]:
+    pid = dados["results"][0]["id"]
+    testar(f"items de {pid} condition=used", f"https://api.mercadolibre.com/products/{pid}/items?condition=used")
 
