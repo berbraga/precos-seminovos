@@ -25,12 +25,22 @@ def testar(nome, url):
         print(f"{nome}: HTTP {e.code} - {body[:400]}")
         return e.code, body
 
-# 1) tentar achar product_id de iphone via /products/search com product_identifier generico
-testar("products/search domain iphone", "https://api.mercadolibre.com/products/search?status=active&site_id=MLB&domain_id=MLB-CELLPHONES&keywords=iphone")
+import urllib.parse
 
-# 2) autocomplete de categoria - ver se existe endpoint de sugestao
-testar("domain_discovery", "https://api.mercadolibre.com/sites/MLB/domain_discovery/search?q=iphone%2013&limit=5")
+_, body = testar("domain_discovery", "https://api.mercadolibre.com/sites/MLB/domain_discovery/search?q=iphone%2013&limit=5")
+info = json.loads(body)[0]
+line_value_id = next(a["value_id"] for a in info["attributes"] if a["id"] == "LINE")
+brand_value_id = next(a["value_id"] for a in info["attributes"] if a["id"] == "BRAND")
+domain_id = info["domain_id"]
 
-# 3) catalog_product_id conhecido de iphone (exemplo generico do dominio MLB-CELLPHONES) - achar via products/search com attributes
-testar("products/search attributes brand=Apple", "https://api.mercadolibre.com/products/search?status=active&site_id=MLB&category_id=MLB1055&attributes=BRAND:Apple")
+attrs_variantes = [
+    f"LINE:{line_value_id}",
+    f"[{{\"id\":\"LINE\",\"value_id\":\"{line_value_id}\"}}]",
+]
+for attrs in attrs_variantes:
+    q = urllib.parse.quote(attrs, safe="")
+    testar(f"products/search attributes={attrs[:30]}", f"https://api.mercadolibre.com/products/search?status=active&site_id=MLB&domain_id={domain_id}&attributes={q}")
+
+# product_identifier as vezes eh o proprio value_id do LINE combinado com BRAND
+testar("products/search product_identifier=LINE value", f"https://api.mercadolibre.com/products/search?status=active&site_id=MLB&domain_id={domain_id}&product_identifier={line_value_id}")
 
