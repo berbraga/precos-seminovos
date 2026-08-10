@@ -96,9 +96,11 @@ for url_html in [
 req3 = urllib.request.Request("https://lista.mercadolivre.com.br/iphone-13-seminovo", headers={"User-Agent": UA})
 with urllib.request.urlopen(req3, timeout=15) as r3:
     html = r3.read().decode("utf-8", errors="replace")
-import re as re_mod
-titulos = re_mod.findall(r'"title":"([^"]{5,80})"', html)
-precos = re_mod.findall(r'"price":\s*(\d+)', html)
-print(f"titulos encontrados via regex simples: {len(titulos)} -> {titulos[:5]}")
-print(f"precos encontrados via regex simples: {len(precos)} -> {precos[:5]}")
+
+print(f"tamanho html: {len(html)}")
+print("PRIMEIROS 2000 chars:")
+print(html[:2000])
+print("...")
+print("chars 2000-6000:")
+print(html[2000:6000])
 
