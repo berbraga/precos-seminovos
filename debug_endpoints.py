@@ -78,15 +78,27 @@ print("\n== teste scraping HTML direto do runner ==")
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 for url_html in [
     "https://lista.mercadolivre.com.br/iphone-13-seminovo",
-    "https://www.mercadolivre.com.br/robots.txt",
+    "https://lista.mercadolivre.com.br/robots.txt",
 ]:
     req = urllib.request.Request(url_html, headers={"User-Agent": UA})
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
             body = r.read().decode("utf-8", errors="replace")
             print(f"{url_html}: HTTP {r.status} - {len(body)} bytes")
+            if "robots.txt" in url_html:
+                print(body)
     except urllib.error.HTTPError as e:
         print(f"{url_html}: HTTP {e.code}")
     except Exception as e:
         print(f"{url_html}: ERRO {e}")
+
+# extrair titulos e precos brutos da pagina de listagem pra ver se o HTML da pra parsear
+req3 = urllib.request.Request("https://lista.mercadolivre.com.br/iphone-13-seminovo", headers={"User-Agent": UA})
+with urllib.request.urlopen(req3, timeout=15) as r3:
+    html = r3.read().decode("utf-8", errors="replace")
+import re as re_mod
+titulos = re_mod.findall(r'"title":"([^"]{5,80})"', html)
+precos = re_mod.findall(r'"price":\s*(\d+)', html)
+print(f"titulos encontrados via regex simples: {len(titulos)} -> {titulos[:5]}")
+print(f"precos encontrados via regex simples: {len(precos)} -> {precos[:5]}")
 
