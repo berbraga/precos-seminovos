@@ -74,3 +74,19 @@ print(f"total itens novos encontrados: {total_novos_achados}")
 for ex in exemplos_usados:
     print("EXEMPLO USADO:", json.dumps(ex, ensure_ascii=False)[:1000])
 
+print("\n== teste scraping HTML direto do runner ==")
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+for url_html in [
+    "https://lista.mercadolivre.com.br/iphone-13-seminovo",
+    "https://www.mercadolivre.com.br/robots.txt",
+]:
+    req = urllib.request.Request(url_html, headers={"User-Agent": UA})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            body = r.read().decode("utf-8", errors="replace")
+            print(f"{url_html}: HTTP {r.status} - {len(body)} bytes")
+    except urllib.error.HTTPError as e:
+        print(f"{url_html}: HTTP {e.code}")
+    except Exception as e:
+        print(f"{url_html}: ERRO {e}")
+
