@@ -28,45 +28,13 @@ jobs:
       - name: autotest (sem rede, sem credencial)
         run: python ml_coleta.py --autotest
 
+      - name: instalar playwright
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+
       - name: debug-endpoints (temporario)
-        env:
-          ML_CLIENT_ID: ${{ secrets.ML_CLIENT_ID }}
-          ML_CLIENT_SECRET: ${{ secrets.ML_CLIENT_SECRET }}
-          ML_REFRESH_TOKEN: ${{ secrets.ML_REFRESH_TOKEN }}
         run: python debug_endpoints.py
-
-      - name: persistir refresh_token rotacionado (debug)
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          if [ -f .new_refresh_token ]; then
-            echo "::add-mask::$(cat .new_refresh_token)"
-            gh secret set ML_REFRESH_TOKEN --body "$(cat .new_refresh_token)" --repo "${{ github.repository }}"
-            rm -f .new_refresh_token
-          fi
-
-      - name: coleta
-        env:
-          ML_CLIENT_ID: ${{ secrets.ML_CLIENT_ID }}
-          ML_CLIENT_SECRET: ${{ secrets.ML_CLIENT_SECRET }}
-          ML_REFRESH_TOKEN: ${{ secrets.ML_REFRESH_TOKEN }}
-        run: python ml_coleta.py
-
-      - name: persistir refresh_token rotacionado
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          if [ -f .new_refresh_token ]; then
-            echo "::add-mask::$(cat .new_refresh_token)"
-            if [ -z "${GH_TOKEN}" ]; then
-              echo "::error::GH_PAT nao configurado. O refresh_token rotacionou nesta execucao mas nao foi persistido no secret ML_REFRESH_TOKEN. A proxima execucao vai falhar com invalid_grant. Configure o secret GH_PAT (fine-grained PAT com permissao Secrets: Read and write neste repositorio)."
-              exit 1
-            fi
-            gh secret set ML_REFRESH_TOKEN --body "$(cat .new_refresh_token)" --repo "${{ github.repository }}"
-            rm -f .new_refresh_token
-          fi
 
       - name: publicar
         run: |
