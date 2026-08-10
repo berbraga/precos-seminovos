@@ -32,20 +32,45 @@ info = json.loads(body)[0]
 domain_id = info["domain_id"]
 category_id = info["category_id"]
 
-_, body = testar("q=iphone 13 seminovo + domain + limit10", f"https://api.mercadolibre.com/products/search?site_id=MLB&domain_id={domain_id}&q=iphone+13+seminovo&limit=10")
-dados = json.loads(body)
-print(f"total={dados['paging']['total']} results={len(dados['results'])}")
-print("PRIMEIRO RESULT COMPLETO:")
-print(json.dumps(dados["results"][0], ensure_ascii=False))
+todos_ids = []
+offset = 0
+while offset < 300:
+    url = f"https://api.mercadolibre.com/products/search?site_id=MLB&domain_id={domain_id}&q=iphone+13+seminovo&limit=50&offset={offset}"
+    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {access_token}"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        d = json.loads(r.read().decode("utf-8"))
+    if not d["results"]:
+        break
+    todos_ids.extend(d["results"])
+    offset += 50
+    if offset >= d["paging"]["total"]:
+        break
 
-# testar items de varios catalogos ate achar um com winner usado
-for r in dados["results"][:8]:
+print(f"total catalog_product_ids coletados: {len(todos_ids)}")
+
+total_usados_achados = 0
+total_novos_achados = 0
+sem_winner = 0
+exemplos_usados = []
+for r in todos_ids:
     pid = r["id"]
-    status2, body2 = testar(f"items {pid} ({r.get('name')}) condition=used", f"https://api.mercadolibre.com/products/{pid}/items?condition=used")
-    if status2 == 200:
-        d2 = json.loads(body2)
-        usados = [x for x in d2["results"] if x.get("condition") == "used"]
-        print(f"  -> {len(d2['results'])} total, {len(usados)} usados")
-        if usados:
-            print("  PRIMEIRO USADO COMPLETO:", json.dumps(usados[0], ensure_ascii=False)[:1500])
+    url2 = f"https://api.mercadolibre.com/products/{pid}/items"
+    req2 = urllib.request.Request(url2, headers={"Authorization": f"Bearer {access_token}"})
+    try:
+        with urllib.request.urlopen(req2, timeout=15) as r2:
+            d2 = json.loads(r2.read().decode("utf-8"))
+        usados = [x for x in d2.get("results", []) if x.get("condition") == "used"]
+        novos = [x for x in d2.get("results", []) if x.get("condition") == "new"]
+        total_usados_achados += len(usados)
+        total_novos_achados += len(novos)
+        if usados and len(exemplos_usados) < 2:
+            exemplos_usados.append(usados[0])
+    except urllib.error.HTTPError:
+        sem_winner += 1
+
+print(f"catalogos sem winner (404): {sem_winner}")
+print(f"total itens usados encontrados: {total_usados_achados}")
+print(f"total itens novos encontrados: {total_novos_achados}")
+for ex in exemplos_usados:
+    print("EXEMPLO USADO:", json.dumps(ex, ensure_ascii=False)[:1000])
 
