@@ -1,8 +1,8 @@
 name: Coleta de precos Mercado Livre
 
+# DESATIVADO: ver README.md secao "Por que o Mercado Livre foi abandonado".
+# Sem cron ativo -- so roda se disparado manualmente para reteste futuro.
 on:
-  schedule:
-    - cron: '30 1 * * 1'      # domingo 22:30 BRT = segunda 01:30 UTC
   workflow_dispatch: {}
 
 permissions:
@@ -27,14 +27,6 @@ jobs:
 
       - name: autotest (sem rede, sem credencial)
         run: python ml_coleta.py --autotest
-
-      - name: instalar playwright
-        run: |
-          pip install playwright
-          python -m playwright install --with-deps chromium
-
-      - name: debug-endpoints (temporario)
-        run: python debug_endpoints.py
 
       - name: publicar
         run: |

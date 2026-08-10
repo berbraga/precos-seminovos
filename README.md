@@ -1,8 +1,44 @@
 # precos-seminovos
 
-Coleta semanal de preco de iPhone seminovo no Mercado Livre, via API oficial,
-publicada como JSON num repositorio publico para a rotina do Claude Cowork
-consumir por HTTP.
+Coleta semanal de preco de iPhone seminovo no Mercado Livre — **projeto
+abandonado, workflow desativado**. Ver "Por que o Mercado Livre foi
+abandonado" abaixo antes de retomar.
+
+Estado original do plano: coletar via API oficial e publicar como JSON num
+repositorio publico para a rotina do Claude Cowork consumir por HTTP.
+
+## Por que o Mercado Livre foi abandonado
+
+Tres caminhos tecnicos foram tentados e esgotados, nesta ordem:
+
+1. **`/sites/MLB/search` (API oficial, OAuth)** — funciona tecnicamente
+   (token, escopo, credenciais corretas), mas retorna `403 forbidden` em
+   toda chamada. O Mercado Livre restringiu esse endpoint de busca por termo
+   para aplicacoes novas desde 2023; so segue liberado para apps
+   homologados antes da mudanca (allowlist fechada, sem cadastro novo
+   possivel). Nao ha toggle de permissao no painel do desenvolvedor que
+   resolva isso — e bloqueio de politica de produto, nao de configuracao.
+
+2. **`/products/search` + `/products/{id}/items` (API de catalogo)** —
+   alternativa que responde 200 (nao bloqueada). Usada para localizar
+   ~300 `catalog_product_id` de iPhone 13 e consultar os itens vinculados.
+   Resultado real medido: **0 itens em condicao usada, 583 em condicao
+   nova**, em 300 catalogos testados. Usados no Mercado Livre nao
+   competem no sistema de catalogo/buybox — ficam fora dessa API.
+
+3. **Scraping da pagina de listagem HTML via GitHub Actions (Playwright)**
+   — hipotese de que o IP do runner do GitHub (diferente do sandbox do
+   Cowork) nao seria bloqueado. `robots.txt` permite o path testado.
+   Resultado: o Mercado Livre serve uma pagina de verificacao anti-bot
+   (`gz-account-verification`, `suspicious-traffic-frontend`) tanto para
+   requisicao HTTP simples quanto para Chromium headless via Playwright —
+   deteccao ativa de bot, nao ausencia de renderizacao JS. Contornar
+   deteccao anti-bot ativamente (fingerprint spoofing, stealth plugins)
+   nao foi feito por ser evasao de protecao, fora do escopo aceitavel.
+
+Com as 3 rotas esgotadas, a planilha final roda sem a fonte Mercado Livre.
+O codigo abaixo fica documentado caso o Mercado Livre mude a politica do
+endpoint de busca no futuro (rota 1 seria a correta se reaberta).
 
 ## Por que isso roda no GitHub Actions e nao no Cowork
 
@@ -101,8 +137,16 @@ ML_REFRESH_TOKEN=
 
 ## Como obter a credencial do Mercado Livre
 
-A aplicacao `pitzi-precos` (App ID `5093338876848781`) ja existe no painel
-do Mercado Pago (portais ML/MP unificados).
+**Atencao**: aplicacoes criadas no painel do Mercado Pago
+(mercadopago.com.br/developers) NAO tem acesso a API de marketplace do
+Mercado Livre, mesmo com escopo correto — sao portais separados. A
+aplicacao correta precisa ser criada em developers.mercadolivre.com.br,
+unidade de negocio "Mercado Livre", com PKCE habilitado (exige
+`code_verifier`/`code_challenge` no fluxo abaixo).
+
+Isso so importa se o endpoint `/sites/MLB/search` for reaberto pelo ML no
+futuro — hoje ele retorna 403 mesmo com credenciais corretas (ver "Por que
+o Mercado Livre foi abandonado" acima).
 
 1. Em *Configuracoes da aplicacao -> Configuracao avancada*, salve a URL de
    redirecionamento `www.pitzi.com.br/callback`.
@@ -115,26 +159,30 @@ do Mercado Pago (portais ML/MP unificados).
    > `pitzi.com.br/callback` nao precisa existir; o codigo aparece na barra
    > de endereco mesmo com 404.
 
-2. Autorize em:
+2. Gere `code_verifier` (random) e `code_challenge` (SHA256 + base64url do
+   verifier), e autorize em:
 
    ```
-   https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=5093338876848781&redirect_uri=https%3A%2F%2Fwww.pitzi.com.br%2Fcallback
+   https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=SEU_CLIENT_ID&redirect_uri=https%3A%2F%2Fwww.pitzi.com.br%2Fcallback&code_challenge=SEU_CODE_CHALLENGE&code_challenge_method=S256
    ```
 
-   Copie o `code=TG-...` da barra de endereco (validade: 10 minutos).
+   Copie o `code=TG-...` da barra de endereco (validade: 10 minutos, uso
+   unico).
 
-3. Pegue a **Chave secreta** em *PRODUCAO -> Credenciais de producao*.
+3. Pegue a **Chave secreta** na pagina de configuracao da aplicacao.
 
-4. Troque o code pelo `refresh_token`:
+4. Troque o code pelo `refresh_token` (note o `code_verifier` extra em
+   relacao ao fluxo OAuth padrao, exigido pelo PKCE):
 
    ```bash
    curl -X POST https://api.mercadolibre.com/oauth/token \
      -H 'Content-Type: application/x-www-form-urlencoded' \
      -d grant_type=authorization_code \
-     -d client_id=5093338876848781 \
+     -d client_id=SEU_CLIENT_ID \
      -d client_secret=SUA_CHAVE_SECRETA \
      -d code=TG-xxxxxxxxxx \
-     -d redirect_uri=https://www.pitzi.com.br/callback
+     -d redirect_uri=https://www.pitzi.com.br/callback \
+     -d code_verifier=SEU_CODE_VERIFIER
    ```
 
 5. Crie um **Personal Access Token fine-grained** do GitHub: acesso restrito

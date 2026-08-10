@@ -29,9 +29,8 @@ AQUI = Path(__file__).resolve().parent
 BRT = timezone(timedelta(hours=-3))
 
 TOKEN_URL = "https://api.mercadolibre.com/oauth/token"
-PRODUCTS_SEARCH_URL = "https://api.mercadolibre.com/products/search"
-PRODUCT_ITEMS_URL = "https://api.mercadolibre.com/products/{}/items"
-DOMAIN = "MLB-CELLPHONES"
+SEARCH_URL = "https://api.mercadolibre.com/sites/MLB/search"
+CATEGORY = "MLB1055"
 
 TOKEN_CACHE = AQUI / ".ml_token.json"
 NEW_REFRESH_FILE = AQUI / ".new_refresh_token"
